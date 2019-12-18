@@ -3,6 +3,7 @@ package com.miempresa.a16dic
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
@@ -21,9 +22,10 @@ import kotlinx.android.synthetic.main.fragment_songs.*
 
 class MainActivity : AppCompatActivity() {
 
+
+    private val PERMISSION_CODE = 1000
     lateinit var toolbar: ActionBar
-    val REQUEST_IMAGE_CAPTURE = 1
-    val PERMISSION_REQUEST_CODE = 0
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,42 +34,53 @@ class MainActivity : AppCompatActivity() {
         toolbar = supportActionBar!!
 
         setNav(navigationView as BottomNavigationView)
-        openFragment( SongsFragment.newInstance())
+        openFragment( ExampleFragment.newInstance())
+
+        permissionsGranted()
 
 
-        if (checkPermissionCam()) dispatchTakePictureIntent() else requestPermissionCam()
 
 
     }
 
 
-    private fun dispatchTakePictureIntent() {
-        Intent(MediaStore.ACTION_IMAGE_CAPTURE).also { takePictureIntent ->
-            takePictureIntent.resolveActivity(packageManager)?.also {
-                startActivityForResult(takePictureIntent, REQUEST_IMAGE_CAPTURE)
+
+    fun permissionsGranted() {
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M){
+            if (checkSelfPermission(Manifest.permission.CAMERA)
+                == PackageManager.PERMISSION_DENIED ||
+                checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                == PackageManager.PERMISSION_DENIED){
+                //permission was not enabled
+                val permission = arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                //show popup to request permission
+                requestPermissionCam()
+            }
+            else{
+                //permission already granted
+
             }
         }
-    }
+        else{
+            //system os is < marshmallow
 
+        }
 
-    private fun checkPermissionCam(): Boolean {
-        return (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) ==
-                PackageManager.PERMISSION_GRANTED)
     }
 
     private fun requestPermissionCam() {
-        ActivityCompat.requestPermissions(this, arrayOf(
-            Manifest.permission.CAMERA
-        ), PERMISSION_REQUEST_CODE)
+        requestPermissions( arrayOf(
+            Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE
+        ), PERMISSION_CODE)
     }
-
 
     fun setNav(navigationBar: BottomNavigationView) {
 
 
         navigationBar.setOnNavigationItemSelectedListener { item ->
             when (item.itemId) {
-               1-> {
+                R.id.navigation_songs-> {
                     toolbar.title = "Songs"
                     val songsFragment = SongsFragment.newInstance()
                     openFragment(songsFragment)
